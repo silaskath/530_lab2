@@ -78,12 +78,12 @@ static inline int size2level (ssize_t size) {
   * Recall that the 0th entry in levels is really 2^5, 
   * the second level represents 2^6, etc.
   */
-  if      (size < MIN_ALLOC)      return 0;  // 32
-  else if (size < 2 * MIN_ALLOC)  return 1;  // 64
-  else if (size < 4 * MIN_ALLOC)  return 2;  // 128
-  else if (size < 8 * MIN_ALLOC)  return 3;  // 256
-  else if (size < 16 * MIN_ALLOC) return 4;  // 512
-  else if (size < 32 * MIN_ALLOC) return 5;  // 1024
+  if      (size <= MIN_ALLOC)      return 0;  // 32
+  else if (size <= 2 * MIN_ALLOC)  return 1;  // 64
+  else if (size <= 4 * MIN_ALLOC)  return 2;  // 128
+  else if (size <= 8 * MIN_ALLOC)  return 3;  // 256
+  else if (size <= 16 * MIN_ALLOC) return 4;  // 512
+  else if (size <= 32 * MIN_ALLOC) return 5;  // 1024
   else                            return 6;  // 2048
 
   return 0;
