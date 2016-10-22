@@ -1,7 +1,7 @@
 /* Tar Heels Allocator
  * 
  * Simple Hoard-style malloc/free implementation.
- * Not suitable for use for large allocations, or 
+ * Not suitable for use for large allocatoins, or 
  * in multi-threaded programs.
  * 
  * to use: 
@@ -74,10 +74,18 @@ static struct superblock_pool levels[LEVELS] = {{NULL, 0, 0},
 
 static inline int size2level (ssize_t size) {
   /* Your code here.
-   * Convert the size to the correct power of two. 
-   * Recall that the 0th entry in levels is really 2^5, 
-   * the second level represents 2^6, etc.
-   */
+  * Convert the size to the correct power of two. 
+  * Recall that the 0th entry in levels is really 2^5, 
+  * the second level represents 2^6, etc.
+  */
+  if      (size < MIN_ALLOC)      return 0;  // 32
+  else if (size < 2 * MIN_ALLOC)  return 1;  // 64
+  else if (size < 4 * MIN_ALLOC)  return 2;  // 128
+  else if (size < 8 * MIN_ALLOC)  return 3;  // 256
+  else if (size < 16 * MIN_ALLOC) return 4;  // 512
+  else if (size < 32 * MIN_ALLOC) return 5;  // 1024
+  else                            return 6;  // 2048
+
   return 0;
 }
 
@@ -104,6 +112,14 @@ struct superblock_bookkeeping * alloc_super (int power) {
   //  Be sure to add this many objects to levels[power]->free_objects, reserving
   //  the first one for the bookkeeping.
 
+  /*
+  in order to calculate and fill free objects in this superblock we need to divide
+  the size of a superblock (4KB) by the number of bytes associated with a level. For example,
+  if we are allocating objects on level 6, we divide 4KB by 2KB, thus we have two objects.
+  This means we get 4096/32 objects if level 0.`
+
+
+  */
   // The following loop populates the free list with some atrocious
   // pointer math.  You should not need to change this, provided that you
   // correctly calculate free_objects.
@@ -196,5 +212,4 @@ void free(void *ptr) {
 int pthread_create(void __attribute__((unused)) *x, ...) {
   exit(-ENOSYS);
 }
-
 
