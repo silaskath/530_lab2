@@ -24,7 +24,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
- 
+#include <math.h>
+
 #define assert(cond) if (!(cond)) __asm__ __volatile__ ("int $3")
 
 /* Object: One return from malloc/input to free. */
@@ -86,7 +87,6 @@ static inline int size2level (ssize_t size) {
   else if (size <= 32 * MIN_ALLOC) return 5;  // 1024
   else                            return 6;  // 2048
 
-  return 0;
 }
 
 static inline
@@ -94,11 +94,14 @@ struct superblock_bookkeeping * alloc_super (int power) {
 
   void *page;
   struct superblock* sb;
-  int free_objects = 0, bytes_per_object = 0;
+  // Free objects is the size of the page (4KB) divided by the size of the object
+  int free_objects = ((SUPER_BLOCK_SIZE) / (bytes_per_object)); 
+  // 1 << (power + 5) == 2^(power+5), example: if power = 5, object size is 2^(5+5) == 1024B
+  int bytes_per_object = (1 << (power + 5));
   char *cursor;
-  // Your code here  
+
   // Allocate a page of anonymous memory
-  // WARNING: DO NOT use brk---use mmap, lest you face untold suffering
+  mmap(page, SUPER_BLOCK_SIZE)
   
   sb = (struct superblock*) page;
   // Put this one the list.
@@ -107,19 +110,14 @@ struct superblock_bookkeeping * alloc_super (int power) {
   levels[power].whole_superblocks++;
   sb->bkeep.level = power;
   sb->bkeep.free_list = NULL;
-  
+
   // Your code here: Calculate and fill the number of free objects in this superblock
   //  Be sure to add this many objects to levels[power]->free_objects, reserving
   //  the first one for the bookkeeping.
 
-  /*
-  in order to calculate and fill free objects in this superblock we need to divide
-  the size of a superblock (4KB) by the number of bytes associated with a level. For example,
-  if we are allocating objects on level 6, we divide 4KB by 2KB, thus we have two objects.
-  This means we get 4096/32 objects if level 0.`
-
-
-  */
+  // free_objects minus one for bookkeeping
+  levels[power].free_objects = free_objects - 1;
+  
   // The following loop populates the free list with some atrocious
   // pointer math.  You should not need to change this, provided that you
   // correctly calculate free_objects.
