@@ -94,14 +94,14 @@ struct superblock_bookkeeping * alloc_super (int power) {
 
   void *page;
   struct superblock* sb;
-  // Free objects is the size of the page (4KB) divided by the size of the object
-  int free_objects = ((SUPER_BLOCK_SIZE) / (bytes_per_object)); 
   // 1 << (power + 5) == 2^(power+5), example: if power = 5, object size is 2^(5+5) == 1024B
   int bytes_per_object = (1 << (power + 5));
+  // Free objects is the size of the page (4KB) divided by the size of the object
+  int free_objects = ((SUPER_BLOCK_SIZE) / (bytes_per_object)); 
   char *cursor;
 
   // Allocate a page of anonymous memory
-  mmap(page, SUPER_BLOCK_SIZE)
+  mmap(page, SUPER_BLOCK_SIZE);
   
   sb = (struct superblock*) page;
   // Put this one the list.
@@ -146,8 +146,8 @@ void *malloc(size_t size) {
   }
   
   // Delete the following two lines
-  errno = -ENOMEM;
-  return rv;
+  // errno = -ENOMEM;
+  // return rv;
 
   
   pool = &levels[power];
@@ -162,6 +162,7 @@ void *malloc(size_t size) {
       struct object *next = bkeep->free_list;
       /* Remove an object from the free list. */
       // Your code here
+      
       //
       // NB: If you take the first object out of a whole
       //     superblock, decrement levels[power]->whole_superblocks
