@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <math.h>
+#include <sys/mman.h>
 
 #define assert(cond) if (!(cond)) __asm__ __volatile__ ("int $3")
 
@@ -85,7 +85,7 @@ static inline int size2level (ssize_t size) {
   else if (size <= 8 * MIN_ALLOC)  return 3;  // 256
   else if (size <= 16 * MIN_ALLOC) return 4;  // 512
   else if (size <= 32 * MIN_ALLOC) return 5;  // 1024
-  else                            return 6;  // 2048
+  else                             return 6;  // 2048
 
 }
 
@@ -101,12 +101,13 @@ struct superblock_bookkeeping * alloc_super (int power) {
   char *cursor;
 
   // Allocate a page of anonymous memory
-  mmap(page, SUPER_BLOCK_SIZE);
+  page = mmap(NULL, SUPER_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
   
   sb = (struct superblock*) page;
-  // Put this one the list.
+  // The next two lines add the SB to the front of the list
   sb->bkeep.next = levels[power].next;
   levels[power].next = &sb->bkeep;
+
   levels[power].whole_superblocks++;
   sb->bkeep.level = power;
   sb->bkeep.free_list = NULL;
@@ -144,7 +145,7 @@ void *malloc(size_t size) {
     errno = -ENOMEM;
     return NULL;
   }
-  
+
   // Delete the following two lines
   // errno = -ENOMEM;
   // return rv;
@@ -161,13 +162,25 @@ void *malloc(size_t size) {
     if (bkeep->free_count) {
       struct object *next = bkeep->free_list;
       /* Remove an object from the free list. */
-      // Your code here
-      
+
+      rv = &next->raw; // pretty sure this is entirely wrong.
+
+      /* In order to check if we need to decrement a whole superblock,
+         we can see if the free count in that SB is equal to the
+         maximum number of free objects that the SB can hold */
+      int bytes_per_object = (1 << (power + 5));
+      if (bkeep->free_count == (SUPER_BLOCK_SIZE / bytes_per_object))
+        pool->whole_superblocks--;
+
+      bkeep->free_count--;
       //
       // NB: If you take the first object out of a whole
       //     superblock, decrement levels[power]->whole_superblocks
       break;
     }
+
+    /* Need to get the next bkeep somehow */
+    // bkeep = bkeep.next;
   }
 
   // assert that rv doesn't end up being NULL at this point
