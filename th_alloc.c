@@ -118,6 +118,7 @@ struct superblock_bookkeeping * alloc_super (int power) {
 
   // free_objects minus one for bookkeeping
   levels[power].free_objects = free_objects - 1;
+  sb->bkeep.free_count = free_objects - 1;
   
   // The following loop populates the free list with some atrocious
   // pointer math.  You should not need to change this, provided that you
@@ -172,6 +173,7 @@ void *malloc(size_t size) {
       if (bkeep->free_count == (SUPER_BLOCK_SIZE / bytes_per_object))
         pool->whole_superblocks--;
 
+      pool->free_objects--;
       bkeep->free_count--;
       //
       // NB: If you take the first object out of a whole
@@ -180,7 +182,7 @@ void *malloc(size_t size) {
     }
 
     /* Need to get the next bkeep somehow */
-    // bkeep = bkeep.next;
+    bkeep = pool->next;
   }
 
   // assert that rv doesn't end up being NULL at this point
