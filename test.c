@@ -1,35 +1,53 @@
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <stdio.h>
-
+#include <stdlib.h>
+#include <stdint.h>
 int main() {
-	// void *x = malloc(1500);
-	// printf("Hello %p\n", x);
-	// int i;
-	// /* Testing size2level by allocating a number less than each level*/
-	// for (i = 5; i < 12; i++) {
-	// 	// x is allocated 2^i - 5 bytes
-	// 	void *x = malloc((1 << i) - 5);
-	// 	printf("Level %d:  %p\n", i - 5, x);
-	// }
-	// /* Further test by allocating exact sizes */
-	// for (i = 5; i < 12; i++) {
-	// 	// x is allocated 2^i - 5 bytes
-	// 	void *x = malloc(1 << i);
-	// 	printf("Level %d:  %p\n", i - 5, x);
+	/* (1) Check all possible memory allocation sizes */
+	// int i, n, size;
+	// for(i = 4; i < 13; i++) {
+	// 	size = 1 << i;
+	// 	printf("Size of allocation: %d\n", size);
+	// 	void *x = malloc(size);
+	// 	printf("Location of allocation: %p\n", x);
+	// 	/* 4096 - size == is the size of the superblock 
+	// 	   minus the bkeep object */
+	// 	for(n = size; n < 4096/* - size */; n += size) {
+	// 		void *z = malloc(size);
+	// 		printf("Location of allocation: %p\n", z);
+	// 	}
 	// }
 
+	// // void *shit = malloc(32);
+	// // printf("address of shit(32bytes): %p\n", shit);
+	// // void *more = malloc(64);
+	// // printf("address of more(64bytes): %p\n", more);
+	// // void *moreshit = malloc(32);
+	// // printf("address of shit(32bytes): %p\n", moreshit);
 
-	int i;
-	/* Test creating multiple superblocks and traversing correctly */
-	printf("Each of the following mallocs are 1020byes\n");
-	for (i = 0; i < 20; i++) {
-		printf("On malloc #%d\n", i);
-		void *x = malloc(1020);
-		printf("hello %p\n", x);
-	}
-	return (errno);
+	// void *shit = malloc(32);
+	// printf("address of shit(32bytes): %p\n", shit);
+	// void *more = malloc(64);
+	// printf("address of more(64bytes): %p\n", more);
+	// void *moreshit = malloc(32);
+	// printf("address of shit(32bytes): %p\n", moreshit);
+
+	// printf("shit - moreshit: %ld\n", (uint64_t)shit - (uint64_t)moreshit);
+	// char *ptr = "Hello my name is Bob\n\0";
+	// printf("%s\n", ptr);
+
+
+
+
+
+	/* FREEDOM */
+	void *test = malloc(1024);
+	void *test2 = malloc(1024);
+	void *test3 = malloc(1024);
+	void *test4 = malloc(1024);
+	printf("1:%p\n2:%p\n3:%p\n4:%p\n", test, test2, test3, test4);
+	printf("Initial memory address: %p\n", test);
+	free(test);
+	void *replacement = malloc(1024);
+	printf("After free, this should have same memory address: %p\n", replacement);
+	return 0;
 }
-
-

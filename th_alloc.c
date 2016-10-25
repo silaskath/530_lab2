@@ -146,11 +146,6 @@ void *malloc(size_t size) {
     errno = -ENOMEM;
     return NULL;
   }
-
-  // Delete the following two lines
-  // errno = -ENOMEM;
-  // return rv;
-
   
   pool = &levels[power];
 
@@ -166,6 +161,9 @@ void *malloc(size_t size) {
       /* Not sure why this works */
       rv = &next->raw;
 
+      /* Point free list to next object */
+      bkeep->free_list = next->next;
+
       /* Decrement counts */
       pool->free_objects--;
       bkeep->free_count--;
@@ -174,8 +172,8 @@ void *malloc(size_t size) {
          we can see if the free count in that SB is equal to the
          maximum number of free objects that the SB can hold */
       int bytes_per_object = (1 << (power + 5));
-      if (bkeep->free_count == (SUPER_BLOCK_SIZE / bytes_per_object))
-        pool->whole_superblocks--;
+      if (bkeep->free_count == (SUPER_BLOCK_SIZE / bytes_per_object) - 1)
+        pool->whole_superblocks -= 1;
       break;
     }
 
@@ -206,6 +204,21 @@ void free(void *ptr) {
   //   Be sure to put this back on the free list, and update the
   //   free count.  If you add the final object back to a superblock,
   //   making all objects free, increment whole_superblocks.
+  // ptr = (char *) ptr;
+  struct object* freed_obj = (struct object*)ptr;
+  freed_obj->next = bkeep->free_list->next;
+  bkeep->free_list->next = freed_obj;
+
+  /* Increment counts */
+  bkeep->free_count += 1;
+  levels[bkeep->level].free_objects += 1;
+
+  
+  /* Check if superblock has no allocations */
+  int bytes_per_object = (1 << (bkeep->level + 5));
+  int max_free_objects = (SUPER_BLOCK_SIZE / bytes_per_object) - 1;
+  if (max_free_objects == bkeep->free_count)
+  	levels[bkeep->level].whole_superblocks += 1;
 
   while (levels[bkeep->level].whole_superblocks > RESERVE_SUPERBLOCK_THRESHOLD) {
     // Exercise 4: Your code here
