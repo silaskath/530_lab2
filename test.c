@@ -23,6 +23,7 @@ int main() {
 
 	int i;
 	/* Test creating multiple superblocks and traversing correctly */
+	printf("Each of the following mallocs are 1020byes\n");
 	for (i = 0; i < 20; i++) {
 		printf("On malloc #%d\n", i);
 		void *x = malloc(1020);

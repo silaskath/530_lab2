@@ -116,8 +116,8 @@ struct superblock_bookkeeping * alloc_super (int power) {
   //  Be sure to add this many objects to levels[power]->free_objects, reserving
   //  the first one for the bookkeeping.
 
-  // free_objects minus one for bookkeeping
-  levels[power].free_objects = free_objects - 1;
+  // Adjust counts taking in to account bookkeeping
+  levels[power].free_objects += free_objects - 1; 
   sb->bkeep.free_count = free_objects - 1;
   
   // The following loop populates the free list with some atrocious
@@ -162,9 +162,13 @@ void *malloc(size_t size) {
   while (bkeep != NULL) {
     if (bkeep->free_count) {
       struct object *next = bkeep->free_list;
-      /* Remove an object from the free list. */
+      
+      /* Not sure why this works */
+      rv = &next->raw;
 
-      rv = &next->raw; // pretty sure this is entirely wrong.
+      /* Decrement counts */
+      pool->free_objects--;
+      bkeep->free_count--;
 
       /* In order to check if we need to decrement a whole superblock,
          we can see if the free count in that SB is equal to the
@@ -172,16 +176,10 @@ void *malloc(size_t size) {
       int bytes_per_object = (1 << (power + 5));
       if (bkeep->free_count == (SUPER_BLOCK_SIZE / bytes_per_object))
         pool->whole_superblocks--;
-
-      pool->free_objects--;
-      bkeep->free_count--;
-      //
-      // NB: If you take the first object out of a whole
-      //     superblock, decrement levels[power]->whole_superblocks
       break;
     }
 
-    /* Need to get the next bkeep somehow */
+    /* Select the next superblock in the pool, returns NULL if none */
     bkeep = pool->next;
   }
 
