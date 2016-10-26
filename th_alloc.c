@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <sys/mman.h>
 
@@ -158,7 +159,7 @@ void *malloc(size_t size) {
     if (bkeep->free_count) {
       struct object *next = bkeep->free_list;
       
-      /* Not sure why this works */
+      /* Return the address of the next object */
       rv = &next->next;
 
       /* Point free list to next object */
@@ -187,6 +188,9 @@ void *malloc(size_t size) {
   /* Exercise 3: Poison a newly allocated object to detect init errors.
    * Hint: use ALLOC_POISON
    */
+
+  /* Probably incorrect but hey, it's a start */
+  memset(rv, ALLOC_POISON, 1);
   return rv;
 }
 
@@ -200,16 +204,12 @@ struct superblock_bookkeeping * obj2bkeep (void *ptr) {
 void free(void *ptr) {
   struct superblock_bookkeeping *bkeep = obj2bkeep(ptr);
 
-  // Your code here.
   //   Be sure to put this back on the free list, and update the
   //   free count.  If you add the final object back to a superblock,
   //   making all objects free, increment whole_superblocks.
-  // ptr = (char *) ptr;
 
-  /* Place freed object in the front of the free_list */
-  /*  */
   struct object* freed_obj = (struct object*) ptr;
-  freed_obj->next = bkeep->free_list->next;
+  freed_obj->next = bkeep->free_list;
   bkeep->free_list = freed_obj;
 
   /* Increment counts */
@@ -227,6 +227,9 @@ void free(void *ptr) {
     // Exercise 4: Your code here
     // Remove a whole superblock from the level
     // Return that superblock to the OS, using mmunmap
+    
+    /* Cycle through all superblocks and check if whole. 
+       If it is full then call munmap and adjust appropriate counters */
 
     break; // hack to keep this loop from hanging; remove in ex 4
   }
@@ -234,6 +237,9 @@ void free(void *ptr) {
   /* Exercise 3: Poison a newly freed object to detect use-after-free errors.
    * Hint: use FREE_POISON
    */
+
+   /* Not sure how to test this, I assume this is incorrect */
+   memset(freed_obj, FREE_POISON, 1);
 }
 
 // Do NOT touch this - this will catch any attempt to load this into a multi-threaded app
