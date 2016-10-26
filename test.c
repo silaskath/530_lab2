@@ -41,13 +41,21 @@ int main() {
 
 	/* FREEDOM */
 	void *test = malloc(1024);
-	void *test2 = malloc(1024);
-	void *test3 = malloc(1024);
-	void *test4 = malloc(1024);
-	printf("1:%p\n2:%p\n3:%p\n4:%p\n", test, test2, test3, test4);
 	printf("Initial memory address: %p\n", test);
 	free(test);
 	void *replacement = malloc(1024);
 	printf("After free, this should have same memory address: %p\n", replacement);
+	
+	void *t1 = malloc(1024);
+	void *t2 = malloc(1024);
+	void *t3 = malloc(1024);
+	printf("1:%p\n2:%p\n3:%p\n", t1,t2,t3);
+	free(t1);
+	free(t2);
+	free(t3);
+	// the address of t4 == t3
+	void *t4 = malloc(1024);
+	printf("4:%p\n", t4);
+
 	return 0;
 }

@@ -159,7 +159,7 @@ void *malloc(size_t size) {
       struct object *next = bkeep->free_list;
       
       /* Not sure why this works */
-      rv = &next->raw;
+      rv = &next->next;
 
       /* Point free list to next object */
       bkeep->free_list = next->next;
@@ -205,9 +205,12 @@ void free(void *ptr) {
   //   free count.  If you add the final object back to a superblock,
   //   making all objects free, increment whole_superblocks.
   // ptr = (char *) ptr;
-  struct object* freed_obj = (struct object*)ptr;
+
+  /* Place freed object in the front of the free_list */
+  /*  */
+  struct object* freed_obj = (struct object*) ptr;
   freed_obj->next = bkeep->free_list->next;
-  bkeep->free_list->next = freed_obj;
+  bkeep->free_list = freed_obj;
 
   /* Increment counts */
   bkeep->free_count += 1;
