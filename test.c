@@ -22,12 +22,12 @@ int mallocT1() {
 
 /* Let's run out of memory */
 int mallocT2() {
-	int i, y;
+	int i;
 	for (i = 0; i < 1000; i++) {
-		void *ptr = malloc(2048);
+		void *ptr = malloc(512);
 		printf("%d: %p\n", i, ptr);
-		if (i % )
-			free(ptr);
+		// if (i % )
+		// 	free(ptr);
 	}
 	return 1;
 }

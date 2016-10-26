@@ -141,7 +141,8 @@ void *malloc(size_t size) {
   struct superblock_bookkeeping *bkeep;
   void *rv = NULL;
   int power = size2level(size);
-  
+  int bytes_per_object = (1 << (power + 5));
+
   // Check that the allocation isn't too big
   if (size > MAX_ALLOC) {
     errno = -ENOMEM;
@@ -172,7 +173,6 @@ void *malloc(size_t size) {
       /* In order to check if we need to decrement a whole superblock,
          we can see if the free count in that SB is equal to the
          maximum number of free objects that the SB can hold */
-      int bytes_per_object = (1 << (power + 5));
       if (bkeep->free_count == (SUPER_BLOCK_SIZE / bytes_per_object) - 1)
         pool->whole_superblocks -= 1;
       break;
@@ -188,10 +188,17 @@ void *malloc(size_t size) {
   /* Exercise 3: Poison a newly allocated object to detect init errors.
    * Hint: use ALLOC_POISON
    */
+  memset(rv, ALLOC_POISON, bytes_per_object);
 
-  /* Probably incorrect but hey, it's a start */
-  memset(rv, ALLOC_POISON, 1);
   return rv;
+}
+
+void realloc(void *ptr, size_t size) {
+
+}
+
+void calloc(size_t nmemb, size_t size) {
+
 }
 
 static inline
@@ -203,7 +210,8 @@ struct superblock_bookkeeping * obj2bkeep (void *ptr) {
 
 void free(void *ptr) {
   struct superblock_bookkeeping *bkeep = obj2bkeep(ptr);
-
+  int bytes_per_object = (1 << (bkeep.level + 5));
+  int free_sb_objects = (SUPER_BLOCK_SIZE / bytes_per_object) - 1;
   //   Be sure to put this back on the free list, and update the
   //   free count.  If you add the final object back to a superblock,
   //   making all objects free, increment whole_superblocks.
@@ -223,23 +231,25 @@ void free(void *ptr) {
   if (max_free_objects == bkeep->free_count)
   	levels[bkeep->level].whole_superblocks += 1;
 
-  while (levels[bkeep->level].whole_superblocks > RESERVE_SUPERBLOCK_THRESHOLD) {
+  while (levels[bkeep->level].whole_superblocks 
+  	> RESERVE_SUPERBLOCK_THRESHOLD && bkeep != NULL) {
     // Exercise 4: Your code here
-    // Remove a whole superblock from the level
-    // Return that superblock to the OS, using mmunmap
-    
-    /* Cycle through all superblocks and check if whole. 
-       If it is full then call munmap and adjust appropriate counters */
 
-    break; // hack to keep this loop from hanging; remove in ex 4
+  	/* If the free count of the superblock is equal
+  	   to the maximum allowed objects */ 
+  	if (bkeep.free_count == free_sb_objects) {
+  		munmap(bkeep, SUPER_BLOCK_SIZE);
+  		pool->whole_superblocks -= 1;
+  	}
+
+  	/* Get next superblock */
+  	bkeep = bkeep->next;
   }
   
   /* Exercise 3: Poison a newly freed object to detect use-after-free errors.
    * Hint: use FREE_POISON
    */
-
-   /* Not sure how to test this, I assume this is incorrect */
-   memset(freed_obj, FREE_POISON, 1);
+   memset(freed_obj, FREE_POISON, bytes_per_object);
 }
 
 // Do NOT touch this - this will catch any attempt to load this into a multi-threaded app
