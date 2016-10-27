@@ -193,13 +193,13 @@ void *malloc(size_t size) {
   return rv;
 }
 
-void realloc(void *ptr, size_t size) {
+// void realloc(void *ptr, size_t size) {
 
-}
+// }
 
-void calloc(size_t nmemb, size_t size) {
+// void calloc(size_t nmemb, size_t size) {
 
-}
+// }
 
 static inline
 struct superblock_bookkeeping * obj2bkeep (void *ptr) {
@@ -210,7 +210,7 @@ struct superblock_bookkeeping * obj2bkeep (void *ptr) {
 
 void free(void *ptr) {
   struct superblock_bookkeeping *bkeep = obj2bkeep(ptr);
-  int bytes_per_object = (1 << (bkeep.level + 5));
+  int bytes_per_object = (1 << (bkeep->level + 5));
   int free_sb_objects = (SUPER_BLOCK_SIZE / bytes_per_object) - 1;
   //   Be sure to put this back on the free list, and update the
   //   free count.  If you add the final object back to a superblock,
@@ -226,7 +226,7 @@ void free(void *ptr) {
 
   
   /* Check if superblock has no allocations */
-  int bytes_per_object = (1 << (bkeep->level + 5));
+//  int bytes_per_object = (1 << (bkeep->level + 5));
   int max_free_objects = (SUPER_BLOCK_SIZE / bytes_per_object) - 1;
   if (max_free_objects == bkeep->free_count)
   	levels[bkeep->level].whole_superblocks += 1;
@@ -237,9 +237,11 @@ void free(void *ptr) {
 
   	/* If the free count of the superblock is equal
   	   to the maximum allowed objects */ 
-  	if (bkeep.free_count == free_sb_objects) {
+  	if (bkeep->free_count == free_sb_objects) {
   		munmap(bkeep, SUPER_BLOCK_SIZE);
-  		pool->whole_superblocks -= 1;
+
+      /* so here's a problem... pool is only declared in the malloc function
+  		pool->whole_superblocks -= 1; */
   	}
 
   	/* Get next superblock */
