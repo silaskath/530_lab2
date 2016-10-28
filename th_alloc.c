@@ -98,18 +98,18 @@ struct superblock_bookkeeping * alloc_super (int power) {
   // 1 << (power + 5) == 2^(power+5), example: if power = 5, object size is 2^(5+5) == 1024B
   int bytes_per_object = (1 << (power + 5));
   // Free objects is the size of the page (4KB) divided by the size of the object
-  int free_objects = ((SUPER_BLOCK_SIZE) / (bytes_per_object)); 
+  int free_objects = ((SUPER_BLOCK_SIZE) / (bytes_per_object)) - 1; 
   char *cursor;
 
   // Allocate a page of anonymous memory
-  page = mmap(NULL, SUPER_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+  page = mmap(0, SUPER_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
   
   sb = (struct superblock*) page;
   // The next two lines add the SB to the front of the list
   sb->bkeep.next = levels[power].next;
   levels[power].next = &sb->bkeep;
 
-  levels[power].whole_superblocks++;
+  levels[power].whole_superblocks += 1;
   sb->bkeep.level = power;
   sb->bkeep.free_list = NULL;
 
@@ -118,8 +118,8 @@ struct superblock_bookkeeping * alloc_super (int power) {
   //  the first one for the bookkeeping.
 
   // Adjust counts taking in to account bookkeeping
-  levels[power].free_objects += free_objects - 1; 
-  sb->bkeep.free_count = free_objects - 1;
+  levels[power].free_objects += free_objects; 
+  sb->bkeep.free_count = free_objects;
   
   // The following loop populates the free list with some atrocious
   // pointer math.  You should not need to change this, provided that you
@@ -166,15 +166,17 @@ void *malloc(size_t size) {
       /* Point free list to next object */
       bkeep->free_list = next->next;
 
-      /* Decrement counts */
-      pool->free_objects--;
-      bkeep->free_count--;
-
       /* In order to check if we need to decrement a whole superblock,
          we can see if the free count in that SB is equal to the
          maximum number of free objects that the SB can hold */
+      // If this is the first allocation, decrement whole super blocks
       if (bkeep->free_count == (SUPER_BLOCK_SIZE / bytes_per_object) - 1)
         pool->whole_superblocks -= 1;
+
+      /* Decrement counts */
+      pool->free_objects -= 1;
+      bkeep->free_count -= 1;
+
       break;
     }
 
@@ -193,13 +195,13 @@ void *malloc(size_t size) {
   return rv;
 }
 
-void realloc(void *ptr, size_t size) {
+// void realloc(void *ptr, size_t size) {
 
-}
+// }
 
-void calloc(size_t nmemb, size_t size) {
+// void calloc(size_t nmemb, size_t size) {
 
-}
+// }
 
 static inline
 struct superblock_bookkeeping * obj2bkeep (void *ptr) {
@@ -213,8 +215,15 @@ void free(void *ptr) {
   //   Be sure to put this back on the free list, and update the
   //   free count.  If you add the final object back to a superblock,
   //   making all objects free, increment whole_superblocks.
+  int bytes_per_object = (1 << (bkeep->level + 5));
+
+  // struct superblock *sb = (struct superblock*) ptr;
 
   struct object* freed_obj = (struct object*) ptr;
+
+  /* Poison memory */
+  memset(freed_obj, FREE_POISON, bytes_per_object);
+
   freed_obj->next = bkeep->free_list;
   bkeep->free_list = freed_obj;
 
@@ -224,32 +233,35 @@ void free(void *ptr) {
 
   
   /* Check if superblock has no allocations */
-  int bytes_per_object = (1 << (bkeep->level + 5));
   int max_free_objects = (SUPER_BLOCK_SIZE / bytes_per_object) - 1;
   if (max_free_objects == bkeep->free_count)
   	levels[bkeep->level].whole_superblocks += 1;
 
   int free_sb_objects = (SUPER_BLOCK_SIZE / bytes_per_object) - 1;
 
-  while (levels[bkeep->level].whole_superblocks 
-  	> RESERVE_SUPERBLOCK_THRESHOLD && bkeep != NULL) {
+  while (levels[bkeep->level].whole_superblocks	> RESERVE_SUPERBLOCK_THRESHOLD) {
     // Exercise 4: Your code here
 
   	/* If the free count of the superblock is equal
   	   to the maximum allowed objects */ 
   	if (bkeep->free_count == free_sb_objects) {
-  		munmap(bkeep, SUPER_BLOCK_SIZE);
   		levels[bkeep->level].whole_superblocks -= 1;
-  	}
+  		levels[bkeep->level].free_objects -= bkeep->free_count;
+  		// bkeep->next = levels[bkeep->level].next;
+  		// levels[bkeep->level].next = bkeep->next;
+  		// levels[bkeep->level].next = bkeep->next;
 
-  	/* Get next superblock */
-  	bkeep = bkeep->next;
+  		munmap(bkeep, SUPER_BLOCK_SIZE);
+
+  		/* There will never be more than three empty superblocks in a single threaded program
+  		   so break loop */
+  		break;
+  	}
   }
   
   /* Exercise 3: Poison a newly freed object to detect use-after-free errors.
    * Hint: use FREE_POISON
    */
-   memset(freed_obj, FREE_POISON, bytes_per_object);
 }
 
 // Do NOT touch this - this will catch any attempt to load this into a multi-threaded app

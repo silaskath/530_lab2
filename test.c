@@ -32,24 +32,53 @@ int mallocT2() {
 	return 1;
 }
 
+void test_superblock_release() {
+	void *sb1 = malloc(2048);
+	void *sb2 = malloc(2048);
+	void *sb3 = malloc(2048);
+
+	printf("sb1:%p\nsb2:%p\nsb3:%p\n", sb1, sb2, sb3);
+
+	free(sb1);
+	free(sb2);
+	free(sb3);
+
+	sb1 = malloc(2048);
+	sb2 = malloc(2048);
+	sb3 = malloc(2048);
+
+	printf("sb1:%p\nsb2:%p\nsb3:%p\n", sb1, sb2, sb3);
+}
+
 int freeTest1() {
-	void *t1 = malloc(1024);
-	void *t2 = malloc(1024);
-	void *t3 = malloc(1024);
+	int size = 256;
+	void *t1 = malloc(size);
+	void *t2 = malloc(size);
+	void *t3 = malloc(size);
 	printf("1:%p\n2:%p\n3:%p\n", t1,t2,t3);
 	free(t3);
 	free(t2);
 	free(t1);
-	void *t4 = malloc(1024);
+	void *t4 = malloc(size);
 	printf("4:%p\n", t4);
+	void *t5 = malloc(size);
+	printf("5:%p\n", t5);
+	void *t6 = malloc(size);
+	printf("6:%p\n", t6);
+
+	// free(t3);
+	// t3 = malloc(size);
+	// printf("7:%p\n", t3);
+	// printf("t3:%p\n", t3);
 	return 1;
 }
 // set environment LD_PRELOAD=./th_alloc.so
 /* Calls series of tests */
 int runTests() {
- 	mallocT1();
- 	freeTest1();
- 	mallocT2();
+ 	// mallocT1();
+ 	// freeTest1();
+ 	test_superblock_release();
+ 	// mallocT2();
 	return 1;
 }
 
