@@ -74,10 +74,15 @@ void test_superblock_release() {
 
 	free(sb1);free(sb2);free(sb3);
 
+	int i;
 	void *sb4 = malloc(size);
-	void *interrupt = malloc(64); 	// Allocate different page inbetween
+	for (i = 0; i < 10; i++) {
+		void *interrupt = malloc(512); 	// Allocate different page inbetween
+	}
 	void *sb5 = malloc(size);
-	interrupt = malloc(256);		// So that allocations aren't linear
+	for (i = 0; i < 10; i++) {
+		void *interrupt = malloc(512);	// So that allocations aren't linear
+	}
 	void *sb6 = malloc(size);
 
 	printf("sb4:%p\nsb5:%p\nsb6:%p\n", sb4, sb5, sb6);
@@ -108,66 +113,42 @@ void test_free() {
 
 	int size = 512;
 
-	void *t1 = malloc(size);
-	void *t2 = malloc(size);
-	void *t3 = malloc(size);
-	void *t4 = malloc(size);
+	void *t1 = malloc(size);void *t2 = malloc(size);
+	void *t3 = malloc(size);void *t4 = malloc(size);
 
-	uint64_t t1addr = (uint64_t) t1;
-	uint64_t t2addr = (uint64_t) t2;
-	uint64_t t3addr = (uint64_t) t3;
-	uint64_t t4addr = (uint64_t) t4;
+	uint64_t t1addr = (uint64_t) t1;uint64_t t2addr = (uint64_t) t2;
+	uint64_t t3addr = (uint64_t) t3;uint64_t t4addr = (uint64_t) t4;
 
 	printf("t1:%p\nt2:%p\nt3:%p\nt4:%p\n", t1, t2, t3, t4);
 
-	free(t4);
-	free(t3);
-	free(t2);
-	free(t1);
+	free(t4);free(t3);
+	free(t2);free(t1);
 
-	void *t5 = malloc(size);
-	void *t6 = malloc(size);
-	void *t7 = malloc(size);
-	void *t8 = malloc(size);
+	void *t5 = malloc(size);void *t6 = malloc(size);
+	void *t7 = malloc(size);void *t8 = malloc(size);
 
-	uint64_t t5addr = (uint64_t) t5;
-	uint64_t t6addr = (uint64_t) t6;
-	uint64_t t7addr = (uint64_t) t7;
-	uint64_t t8addr = (uint64_t) t8;
+	uint64_t t5addr = (uint64_t) t5;uint64_t t6addr = (uint64_t) t6;
+	uint64_t t7addr = (uint64_t) t7;uint64_t t8addr = (uint64_t) t8;
 
 	printf("t5:%p\nt6:%p\nt7:%p\nt8:%p\n", t5, t6, t7, t8);
 
 	/* free() is LIFO, meaning the last free, the memory address
 	   of free(t1) should equal the memory address of the first allocation
 	   malloc(t5) */
-	assert(t1addr == t5addr);
-	assert(t2addr == t6addr);
-	assert(t3addr == t7addr);
-	assert(t4addr == t8addr);
+	assert(t1addr == t5addr);assert(t2addr == t6addr);
+	assert(t3addr == t7addr);assert(t4addr == t8addr);
 
 	printf("Proper reallocation test passed...\n");
 
-	printf("(2) Test reallocation when freed objects span two superblocks\n");
+	printf("(2) Test reallocation when freed objects span several superblocks\n");
 
 	size = 2048;
-	/* With size of 256, 15 objects equals an entire superblock, so let's allocate 17 */
-	void *ptr1 = malloc(size);
-	void *ptr2 = malloc(size);
-	void *ptr3 = malloc(size);
-	void *ptr4 = malloc(size);
-	void *ptr5 = malloc(size);
-	void *ptr6 = malloc(size);
-	void *ptr7 = malloc(size);
-	void *ptr8 = malloc(size);
-	void *ptr9 = malloc(size);
-	void *ptr10 = malloc(size);
-	void *ptr11 = malloc(size);
-	void *ptr12 = malloc(size);
-	void *ptr13 = malloc(size);
-	void *ptr14 = malloc(size);
-	void *ptr15 = malloc(size);
-	void *ptr16 = malloc(size);
-	void *ptr17 = malloc(size);
+
+	void *ptr1 = malloc(size);void *ptr2 = malloc(size);void *ptr3 = malloc(size);void *ptr4 = malloc(size);
+	void *ptr5 = malloc(size);void *ptr6 = malloc(size);void *ptr7 = malloc(size);
+	void *ptr8 = malloc(size);void *ptr9 = malloc(size);void *ptr10 = malloc(size);
+	void *ptr11 = malloc(size);void *ptr12 = malloc(size);void *ptr13 = malloc(size);
+	void *ptr14 = malloc(size);void *ptr15 = malloc(size);void *ptr16 = malloc(size);void *ptr17 = malloc(size);
 
 	printf("Sizes:\nptr1:%p\nptr2:%p\nptr3:%p\nptr4:%p\nptr5:%p\nptr6:%p\nptr7:%p\n", ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7);
 	printf("ptr8:%p\nptr9:%p\nptr10:%p\nptr11:%p\nptr12:%p\nptr13:%p\nptr14:%p\n", ptr8, ptr9, ptr10, ptr11, ptr12, ptr13, ptr14);
@@ -178,22 +159,10 @@ void test_free() {
 	free(ptr9);free(ptr10);free(ptr11);free(ptr12);
 	free(ptr13);free(ptr14);free(ptr15);free(ptr16);free(ptr17);
 
-	ptr1 = malloc(size);
-	ptr2 = malloc(size);
-	ptr3 = malloc(size);
-	ptr4 = malloc(size);
-	ptr5 = malloc(size);
-	ptr6 = malloc(size);
-	ptr7 = malloc(size);
-	ptr8 = malloc(size);
-	ptr9 = malloc(size);
-	ptr10 = malloc(size);
-	ptr11 = malloc(size);
-	ptr12 = malloc(size);
-	ptr13 = malloc(size);
-	ptr14 = malloc(size);
-	ptr15 = malloc(size);
-	ptr16 = malloc(size);
+	ptr1 = malloc(size);ptr2 = malloc(size);ptr3 = malloc(size);ptr4 = malloc(size);
+	ptr5 = malloc(size);ptr6 = malloc(size);ptr7 = malloc(size);ptr8 = malloc(size);
+	ptr9 = malloc(size);ptr10 = malloc(size);ptr11 = malloc(size);ptr12 = malloc(size);
+	ptr13 = malloc(size);ptr14 = malloc(size);ptr15 = malloc(size);ptr16 = malloc(size);
 	ptr17 = malloc(size);
 
 	printf("Sizes:\nptr1:%p\nptr2:%p\nptr3:%p\nptr4:%p\nptr5:%p\nptr6:%p\nptr7:%p\n", ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7);
@@ -222,9 +191,9 @@ void test_poison() {
 // set environment LD_PRELOAD=./th_alloc.so
 /* Calls series of tests */
 void runTests() {
+ 	test_poison();
  	test_malloc();
  	test_free();
- 	poison_test();
  	test_superblock_release();
 }
 
