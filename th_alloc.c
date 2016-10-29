@@ -1,11 +1,17 @@
-/* Tar Heels Allocator
- * 
- * Simple Hoard-style malloc/free implementation.
- * Not suitable for use for large allocatoins, or 
- * in multi-threaded programs.
- * 
- * to use: 
- * $ export LD_PRELOAD=/path/to/th_alloc.so <your command>
+/*
+ *  Authors: Winsten Marks, Silas Kath
+ *  Program Name: Tar Heels Allocator
+ *  Description: Simple Hoard-style malloc/free implementation.
+ * 		Not suitable for use for large allocatoins, or 
+ * 		in multi-threaded programs.
+ *  	to use: 
+ *  	$ export LD_PRELOAD=/path/to/th_alloc.so <your command>
+ *
+ *  UNC Honor Pledge: I, Silas Kath, certify that no unauthorized assistance has been received or
+ *  given in the completion of this work.
+ *
+ *  UNC Honor Pledge: I, Winsten Marks, certify that no unauthorized assistance has been received or
+ *  given in the completion of this work.
  */
 
 /* Hard-code some system parameters */
