@@ -1,3 +1,12 @@
+/*
+ *  Authors: Winsten Marks, Silas Kath
+ *
+ *  UNC Honor Pledge: I, Silas Kath, certify that no unauthorized assistance has been received or
+ *  given in the completion of this work.
+ *
+ *  UNC Honor Pledge: I, Winsten Marks, certify that no unauthorized assistance has been received or
+ *  given in the completion of this work.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
