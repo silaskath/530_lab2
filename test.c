@@ -12,9 +12,6 @@
 #include <stdint.h>
 #include <assert.h>
 
-#define FREE_POISON 0xab
-#define ALLOC_POISON 0xcd
-
 /* Malloc tests */
 int test_malloc() {
 	printf("(1) Testing basic allocation\n");
@@ -51,6 +48,7 @@ int test_malloc() {
 	char *string = malloc(32);
 	string = "Hello this is a string\n\0";
 	printf("%s", string);
+	printf("Test passed...\n");
 	
 
 	printf("(4) Test large number of allocations\n");
@@ -71,7 +69,8 @@ int test_malloc() {
 
 void test_superblock_release() {
 	printf("Testing the release of superblocks\n");
-	printf("(1) Allocate three SBs, free them, and then alloc three more SBs but with an interrupting malloc, two of the three mallocs should match the previous addresses\n");
+	printf("(1) Allocate three SBs, free them, and then alloc three more SBs"
+		"\nbut with an interrupting malloc, two of the three mallocs should match the previous addresses\n");
 
 	int size = 2048;
 
@@ -113,12 +112,11 @@ void test_superblock_release() {
 	printf("sb1:%p\nsb2:%p\nsb3:%p\nsb4:%p\nsb5:%p\nsb6:%p\nsb7:%p\n", sb1, sb2, sb3, sb4, sb5, sb6, sb7);
 
 	printf("Test passed...\n");
-
 }
 
 void test_free() {
 
-	printf("(1) Test proper reallocation of freed objects (free then malloc)%d\n");
+	printf("(1) Test proper reallocation of freed objects (free then malloc)\n");
 
 	int size = 512;
 
@@ -149,7 +147,7 @@ void test_free() {
 
 	printf("Proper reallocation test passed...\n");
 
-	printf("(2) Test reallocation when freed objects span several superblocks\n");
+	printf("(2) Test reallocation when freed objects span several superblocks (2048 bytes)\n");
 
 	size = 2048;
 
@@ -159,7 +157,7 @@ void test_free() {
 	void *ptr11 = malloc(size);void *ptr12 = malloc(size);void *ptr13 = malloc(size);
 	void *ptr14 = malloc(size);void *ptr15 = malloc(size);void *ptr16 = malloc(size);void *ptr17 = malloc(size);
 
-	printf("Sizes:\nptr1:%p\nptr2:%p\nptr3:%p\nptr4:%p\nptr5:%p\nptr6:%p\nptr7:%p\n", ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7);
+	printf("\nptr1:%p\nptr2:%p\nptr3:%p\nptr4:%p\nptr5:%p\nptr6:%p\nptr7:%p\n", ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7);
 	printf("ptr8:%p\nptr9:%p\nptr10:%p\nptr11:%p\nptr12:%p\nptr13:%p\nptr14:%p\n", ptr8, ptr9, ptr10, ptr11, ptr12, ptr13, ptr14);
 	printf("ptr15:%p\nptr16:%p\nptr17:%p\n", ptr15, ptr16, ptr17);
 
@@ -174,25 +172,60 @@ void test_free() {
 	ptr13 = malloc(size);ptr14 = malloc(size);ptr15 = malloc(size);ptr16 = malloc(size);
 	ptr17 = malloc(size);
 
-	printf("Sizes:\nptr1:%p\nptr2:%p\nptr3:%p\nptr4:%p\nptr5:%p\nptr6:%p\nptr7:%p\n", ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7);
+	printf("\nptr1:%p\nptr2:%p\nptr3:%p\nptr4:%p\nptr5:%p\nptr6:%p\nptr7:%p\n", ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7);
 	printf("ptr8:%p\nptr9:%p\nptr10:%p\nptr11:%p\nptr12:%p\nptr13:%p\nptr14:%p\n", ptr8, ptr9, ptr10, ptr11, ptr12, ptr13, ptr14);
 	printf("ptr15:%p\nptr16:%p\nptr17:%p\n", ptr15, ptr16, ptr17);
+
+	printf("Test passed...\n");
+	printf("(3) Testing excessive successive calls to malloc and free of "
+		"\n2048 bytes (without freeing this would vastly exceed typical memory sizes)\n");
+	int i;
+	for (i = 0; i < 100000; i++) {
+		int * ptr = malloc(2048);
+		free(ptr);
+	}
+	printf("Passed 100,000 malloc and frees\n");
+	printf("(4) Random mallocs and frees\n");
+	void *r1 = malloc(32); void *r2 = malloc(22); void *r3 = malloc(50);
+	void *r4 = malloc(532); void *r5 = malloc(1532); void *r6 = malloc(412);
+	void *r7 = malloc(203); void *r8 = malloc(1); void *r9 = malloc(2047);
+	free(r1);free(r8);free(r9);free(r3);
+	r1 = malloc(2000); r8 = malloc(2000); r9 = malloc(2000);
+	free(r1);
+	r1 = malloc(1024);
+	free(r8);free(r1);free(r2);free(r4);free(r5);free(r6);
+	free(r7);free(r9);
+	printf("Test passed...\n");
 }
 
 void test_poison() {
+	printf("Test poison first.\n");
 	int size = 32;
-	int freep = FREE_POISON & 0xff;
-	int allocp = ALLOC_POISON & 0xff;
-
 	char *c = malloc(size);
 	void *c_loc = &c;
 	printf("c_loc: %p, c: %p\n", c_loc, &c);
 	int i;
+	printf("Malloc Poison:\n");
 	for(i = -10; i < size + 10; i++){
+		if(i == -10)
+			printf("Lines -10 through 0 should be unpoisoned data.\n");
+		if(i == 0)
+			printf("Lines 1 through 32 should be poisoned (cd).\n");
+		if(i == 32)
+			printf("Lines 33 through 42 should be unpoisoned.\n");
 		printf("malloc %d: %x\n", i + 1, c[i] & 0xff);
 	}
+	printf("Free Poison:\n");
 	free(c);
 	for(i = -10; i < size + 10; i++){
+		if(i == -10)
+			printf("Lines -10 through 0 should be unpoisoned data.\n");
+		if(i == 0)
+			printf("Lines 1 through 8 should unpoisoned since they relate to the free list pointer.\n");
+		if(i == 8)
+			printf("Lines 9 through 32 should be poisoned (ab).\n");
+		if(i == 32)
+			printf("Lines 33 through 42 should be unpoisoned.\n");
 		printf("free %d: %x\n", i + 1, c[i] & 0xff);
 	}
 }
